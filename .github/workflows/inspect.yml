@@ -1,0 +1,41 @@
+name: Inspect Zorin OS base
+
+# One-off: unpack the pinned Zorin OS Core ISO and report what the SlozOS Pro
+# remaster has to deal with (branding, extensions, defaults, packages).
+on: workflow_dispatch
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo apt-get update -q && sudo apt-get install -y -q squashfs-tools xorriso
+          df -h / /mnt
+
+      - name: Download and verify Zorin OS Core
+        run: |
+          source build/zorin.env
+          sudo mkdir -p /mnt/w && sudo chown "$USER" /mnt/w && cd /mnt/w
+          curl -fL --retry 5 -o zorin.iso "$ZORIN_URL"
+          echo "$ZORIN_SHA256  zorin.iso" | sha256sum -c -
+
+      - name: Unpack
+        run: |
+          cd /mnt/w
+          xorriso -osirrox on -indev zorin.iso -extract /casper/filesystem.squashfs fs.squashfs >/dev/null 2>&1
+          unsquashfs -s fs.squashfs | head -20
+          sudo unsquashfs -q -d root fs.squashfs && rm fs.squashfs
+
+      - name: Report
+        run: sudo bash build/inspect.sh /mnt/w/root 2>&1
+
+      - name: Packages available from apt
+        run: |
+          R=/mnt/w/root
+          for d in dev dev/pts proc sys run; do sudo mount --bind /$d $R/$d; done
+          sudo cp /etc/resolv.conf $R/etc/resolv.conf
+          sudo chroot $R bash -c 'apt-get update -q >/dev/null 2>&1; for p in steam-installer gamemode mangohud lutris remmina thunderbird evolution gnome-shell-extension-dash-to-panel gnome-shell-extension-arc-menu gnome-shell-extension-blur-my-shell gnome-shell-extension-desktop-icons-ng gnome-shell-extension-tiling-assistant gnome-shell-extension-appindicator fonts-selawik libreoffice-writer firefox gnome-tweaks; do printf "%-45s %s\n" "$p" "$(apt-cache policy $p | sed -n "s/^  Candidate: //p")"; done; apt-cache show thunderbird 2>/dev/null | grep -m3 -E "^(Version|Depends|Description)"'
