@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=SlozOS Pro
+Description=SlozOS Pro boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/slozos-pro
+ScriptFile=/usr/share/plymouth/themes/slozos-pro/slozos-pro.script

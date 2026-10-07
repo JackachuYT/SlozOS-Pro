@@ -1,0 +1,6 @@
+# GNOME Shell extensions bundled in slozos-pro-desktop (from extensions.gnome.org,
+# pinned by version tag and checked by SHA256). All support GNOME 46.
+# uuid                                version_tag  sha256
+dash-to-panel@jderose9.github.com     75054        8989c892f9795948e4490f47dc092218e42d771a6fec3dd44431cb48700ac2e5
+arcmenu@arcmenu.com                   75483        ef414c90dcb5f2b0c6ccb5f8e59fd9963c584789d3d8d26740ddb731100c4b40
+blur-my-shell@aunetx                  75939        9ad74044e7ece1e9a2025ddab107240fcc9b5e33ed2b2b651ea97ae7b8a29df4

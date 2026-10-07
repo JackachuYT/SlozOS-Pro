@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!-- SlozOS Pro installer slideshow (shown by Ubiquity while installing) -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: "Selawik", "Inter", sans-serif; color: #fff; }
+  body { background: #0a1226 url("background.jpg") center / cover no-repeat; }
+  .slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+           padding: 0 9%; opacity: 0; transition: opacity 0.8s ease; }
+  .slide.on { opacity: 1; }
+  .card { max-width: 520px; padding: 28px 32px; border-radius: 12px;
+          background: rgba(20, 28, 48, 0.62); border: 1px solid rgba(255, 255, 255, 0.14); }
+  h1 { margin: 0 0 12px; font-size: 30px; font-weight: 600; }
+  p  { margin: 0; font-size: 16px; line-height: 1.55; color: rgba(255, 255, 255, 0.86); }
+  .dots { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; }
+  .dots span { display: inline-block; width: 7px; height: 7px; margin: 0 4px; border-radius: 50%;
+               background: rgba(255, 255, 255, 0.35); }
+  .dots span.on { background: #4cc2ff; }
+</style>
+</head>
+<body>
+  <div class="slide on"><div class="card"><h1>Welcome to SlozOS Pro</h1>
+    <p>Sit back while SlozOS Pro installs. It only takes a few minutes, and everything you need for work and play will be ready when it's done.</p></div></div>
+  <div class="slide"><div class="card"><h1>Familiar from the first click</h1>
+    <p>The Start button and your apps sit in the middle of the taskbar. Drag a window to the top of the screen to snap it into a layout, just like you're used to.</p></div></div>
+  <div class="slide"><div class="card"><h1>Ready for work</h1>
+    <p>LibreOffice opens and saves Word, Excel and PowerPoint files. Remote Desktop, email, calendar and a fast, private web browser are all included.</p></div></div>
+  <div class="slide"><div class="card"><h1>And for play</h1>
+    <p>Steam is ready to sign in, with GameMode and MangoHud built in. Thousands of Windows games run through Proton.</p></div></div>
+  <div class="slide"><div class="card"><h1>Safe and up to date</h1>
+    <p>Updates arrive automatically from the Software app, with no viruses to worry about. Your files stay on your PC.</p></div></div>
+  <div class="dots"></div>
+<script>
+  var slides = document.querySelectorAll('.slide'), dots = document.querySelector('.dots'), i = 0;
+  for (var n = 0; n < slides.length; n++) dots.appendChild(document.createElement('span'));
+  function show(k) {
+    for (var n = 0; n < slides.length; n++) {
+      slides[n].className = 'slide' + (n === k ? ' on' : '');
+      dots.children[n].className = n === k ? 'on' : '';
+    }
+  }
+  show(0);
+  setInterval(function () { i = (i + 1) % slides.length; show(i); }, 12000);
+</script>
+</body>
+</html>

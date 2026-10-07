@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+case "$1" in
+    configure|triggered)
+        /usr/lib/slozos-pro/brand
+        ;;
+esac
+
+if [ "$1" = configure ]; then
+    # SlozOS Pro boot splash
+    update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth \
+        /usr/share/plymouth/themes/slozos-pro/slozos-pro.plymouth 300
+    update-alternatives --set default.plymouth /usr/share/plymouth/themes/slozos-pro/slozos-pro.plymouth
+    # On an installed system (not while the ISO is being built), apply the
+    # new splash and boot menu now
+    if [ -z "${SLOZOS_PRO_BUILD:-}" ]; then
+        command -v update-initramfs >/dev/null && update-initramfs -u || true
+        [ -e /boot/grub/grub.cfg ] && command -v update-grub >/dev/null && update-grub || true
+    fi
+fi
+exit 0

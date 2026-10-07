@@ -1,0 +1,105 @@
+name: Build SlozOS Pro
+
+# Every pull request builds the ISO and boots it in a VM (screenshots in the
+# run's artifacts). Pushes to main also publish the release.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', '.github/workflows/inspect.yml']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build SlozOS Pro
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room and install tools
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo apt-get update -q
+          sudo apt-get install -y -q squashfs-tools xorriso unzip p7zip-full qemu-system-x86 sassc
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+          sudo mkdir -p /mnt/w && sudo chown "$USER" /mnt/w
+          echo "VERSION=$(cat build/version)" >> "$GITHUB_ENV"
+          df -h / /mnt
+
+      - name: Zorin OS Core ISO (cached)
+        id: zorin
+        uses: actions/cache@v4
+        with:
+          path: /mnt/w/zorin.iso
+          key: zorin-${{ hashFiles('build/zorin.env') }}
+
+      - name: Build slozos-pro-desktop package
+        run: bash build/build-deb.sh "$VERSION" out
+
+      - name: Remaster the ISO
+        run: sudo bash build/remaster.sh /mnt/w "$VERSION"
+
+      - name: Boot it in a VM
+        run: |
+          sudo python3 tests/vm-test.py "/mnt/w/SlozOS-Pro-$VERSION-amd64.iso" vm-test
+          sudo chown -R "$USER" vm-test
+
+      - name: Upload VM screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-test
+          path: vm-test
+          if-no-files-found: ignore
+
+      - name: Split the ISO for GitHub (2 GB per file)
+        run: |
+          cd /mnt/w
+          7z a -mx=0 -v1900m "SlozOS-Pro-$VERSION-amd64.7z" "SlozOS-Pro-$VERSION-amd64.iso" >/dev/null
+          sha256sum "SlozOS-Pro-$VERSION-amd64.iso" > "SlozOS-Pro-$VERSION-amd64.iso.sha256"
+          ls -lh SlozOS-Pro-*
+
+      - name: Upload ISO (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SlozOS-Pro-ISO
+          path: |
+            /mnt/w/SlozOS-Pro-*.7z.*
+            /mnt/w/SlozOS-Pro-*.sha256
+          compression-level: 0
+          retention-days: 7
+
+      - name: Publish the release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: |
+            **SlozOS Pro ${{ env.VERSION }}**: a beginner-friendly desktop for work and play, designed like Windows 11, built on Zorin OS Core 18.1 (Ubuntu 24.04 LTS, supported until 2029).
+
+            - Centred taskbar, Windows 11-style Start menu (Windows key), snap layouts, translucent taskbar
+            - Fluent theme, icons and cursors, Selawik font, SlozOS Pro wallpapers
+            - Work: LibreOffice, email, calendar, Remote Desktop, the Brave web browser
+            - Play: Steam, GameMode, MangoHud; NVIDIA option on the boot menu
+
+            **Download all parts into one folder**, then reassemble:
+            - **Windows:** install [7-Zip](https://www.7-zip.org/), then right-click `SlozOS-Pro-${{ env.VERSION }}-amd64.7z.001` → **7-Zip** → **Extract Here**
+            - **macOS:** open the `.001` file with [Keka](https://www.keka.io/)
+            - **Linux:** `7z x SlozOS-Pro-${{ env.VERSION }}-amd64.7z.001`
+
+            Flash `SlozOS-Pro-${{ env.VERSION }}-amd64.iso` with Balena Etcher, boot from the USB stick and choose **Try or Install SlozOS Pro**.
+
+            SlozOS Pro is an independent project, not affiliated with or endorsed by Zorin Technology Group Ltd., Canonical or Microsoft.
+        run: |
+          TAG="v$VERSION"
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" --title "SlozOS Pro $VERSION" --notes "$NOTES" --latest \
+            /mnt/w/SlozOS-Pro-*.7z.* /mnt/w/SlozOS-Pro-*.sha256 out/slozos-pro-desktop_*_all.deb

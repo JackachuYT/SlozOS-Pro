@@ -1,0 +1,33 @@
+# SlozOS Pro GRUB theme
+title-text: ""
+desktop-image: "background.png"
+desktop-color: "#05091a"
+terminal-font: "Unifont Regular 16"
+
++ boot_menu {
+    left = 30%
+    top = 34%
+    width = 40%
+    height = 40%
+    item_font = "Unifont Regular 16"
+    item_color = "#cfd8e8"
+    selected_item_color = "#ffffff"
+    item_height = 34
+    item_padding = 12
+    item_spacing = 6
+    icon_width = 0
+    icon_height = 0
+    item_icon_space = 0
+    selected_item_pixmap_style = "select_*.png"
+}
+
++ label {
+    top = 82%
+    left = 0
+    width = 100%
+    align = "center"
+    id = "__timeout__"
+    text = "Starting in %d seconds"
+    color = "#8fa3c2"
+    font = "Unifont Regular 16"
+}

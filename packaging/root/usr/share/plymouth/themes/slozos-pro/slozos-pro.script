@@ -1,0 +1,41 @@
+# SlozOS Pro boot splash (black, like Windows), logo + progress bar
+
+# ── Background ────────────────────────────────────────────────────────────────
+Window.SetBackgroundTopColor   (0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+screen_w = Window.GetWidth();
+screen_h = Window.GetHeight();
+
+# ── Wordmark logo ─────────────────────────────────────────────────────────────
+logo_img    = Image("logo.png");
+logo_sprite = Sprite(logo_img);
+logo_sprite.SetX(Math.Int(screen_w / 2 - logo_img.GetWidth()  / 2));
+logo_sprite.SetY(Math.Int(screen_h / 2 - logo_img.GetHeight() / 2 - 28));
+logo_sprite.SetZ(10);
+
+# ── Progress bar ──────────────────────────────────────────────────────────────
+bar_w = Math.Int(screen_w * 0.18);
+bar_h = 3;
+bar_x = Math.Int(screen_w / 2 - bar_w / 2);
+bar_y = Math.Int(screen_h * 0.72);
+
+track_img    = Image.Scale(Image("bar-track.png"), bar_w, bar_h);
+track_sprite = Sprite(track_img);
+track_sprite.SetX(bar_x);
+track_sprite.SetY(bar_y);
+track_sprite.SetZ(1);
+
+fill_template = Image("bar-fill.png");
+fill_sprite   = Sprite();
+fill_sprite.SetX(bar_x);
+fill_sprite.SetY(bar_y);
+fill_sprite.SetZ(2);
+
+fun progress_callback(duration, progress) {
+    local.w = Math.Int(bar_w * progress);
+    if (local.w < 1) local.w = 1;
+    fill_sprite.SetImage(Image.Scale(fill_template, local.w, bar_h));
+}
+
+Plymouth.SetBootProgressFunction(progress_callback);
