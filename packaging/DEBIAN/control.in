@@ -4,7 +4,7 @@ Architecture: all
 Maintainer: SlozOS <https://github.com/JackachuYT/SlozOS-Pro>
 Section: misc
 Priority: optional
-Depends: gnome-shell (>= 46), plymouth, python3, glib2.0-bin
+Depends: gnome-shell (>= 46), plymouth, python3, libglib2.0-bin
 Recommends: steam-installer, gamemode, mangohud
 Homepage: https://github.com/JackachuYT/SlozOS-Pro
 Description: SlozOS Pro desktop: Windows 11-style design and branding
