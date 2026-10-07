@@ -19,7 +19,8 @@ chmod +x /usr/sbin/policy-rc.d
 log "Updates"
 # The ISO boots Zorin's kernel (casper/vmlinuz), so it stays put while the
 # ISO is built; installed systems get kernel updates as normal (unheld below)
-KPKGS=$(dpkg-query -W -f '${Package}\n' 'linux-image-*' 'linux-modules-*' 'linux-headers-*' 'linux-generic*' 'linux-hwe*' 2>/dev/null || true)
+KPKGS=$(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' 'linux-image-*' 'linux-modules-*' 'linux-headers-*' \
+        'linux-generic*' 'linux-hwe*' 'linux-tools-*' 2>/dev/null | awk '$1 == "ii" {print $2}' || true)
 [[ -n $KPKGS ]] && apt-mark hold $KPKGS >/dev/null
 dpkg --add-architecture i386          # Steam's 32-bit libraries
 apt-get update -q
