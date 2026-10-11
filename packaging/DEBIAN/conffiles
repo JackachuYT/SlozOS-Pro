@@ -1,0 +1,3 @@
+/etc/default/grub.d/99-slozos-pro.cfg
+/etc/sysctl.d/90-slozos-pro.conf
+/etc/systemd/zram-generator.conf.d/90-slozos-pro.conf

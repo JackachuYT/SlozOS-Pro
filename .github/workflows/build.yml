@@ -83,12 +83,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           NOTES: |
-            **SlozOS Pro ${{ env.VERSION }}**: a beginner-friendly desktop for work and play, designed like Windows 11, built on Zorin OS Core 18.1 (Ubuntu 24.04 LTS, supported until 2029).
+            **SlozOS Pro ${{ env.VERSION }}**: a beginner-friendly, lightweight desktop OS for everyday use and work, designed like Windows 11, built on Zorin OS Core 18.1 (Ubuntu 24.04 LTS, supported until 2029).
 
             - Centred taskbar, Windows 11-style Start menu (Windows key), snap layouts, translucent taskbar
             - Fluent theme, icons and cursors, Selawik font, SlozOS Pro wallpapers
             - Work: LibreOffice, email, calendar, Remote Desktop, the Brave web browser
-            - Play: Steam, GameMode, MangoHud; NVIDIA option on the boot menu
+            - Light and quick: compressed RAM swap for 4 GB PCs, faster boot, no Snap running in the background, no games, crash pop-ups or adverts; NVIDIA option on the boot menu
 
             **Download all parts into one folder**, then reassemble:
             - **Windows:** install [7-Zip](https://www.7-zip.org/), then right-click `SlozOS-Pro-${{ env.VERSION }}-amd64.7z.001` → **7-Zip** → **Extract Here**

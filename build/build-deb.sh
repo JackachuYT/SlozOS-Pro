@@ -7,7 +7,8 @@
 #   build/build-deb.sh <version> <outdir>
 #
 # Bundles (pinned): Fluent GTK theme, Fluent icons + cursors (vinceliuice,
-# GPL-3.0), and the GNOME extensions in build/extensions.txt.
+# GPL-3.0), and the GNOME extensions in build/extensions.txt. Also memory
+# tuning (zram + sysctl) under /etc.
 # ──────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 VERSION=${1:?version}
@@ -82,7 +83,7 @@ chmod -R a+rX,go-w "$STAGE"
 mkdir -p "$STAGE/DEBIAN" "$OUT"
 sed "s/@VERSION@/$VERSION/" "$CTX/packaging/DEBIAN/control.in" > "$STAGE/DEBIAN/control"
 install -m755 "$CTX/packaging/DEBIAN/postinst" "$CTX/packaging/DEBIAN/prerm" "$STAGE/DEBIAN/"
-install -m644 "$CTX/packaging/DEBIAN/triggers" "$STAGE/DEBIAN/"
+install -m644 "$CTX/packaging/DEBIAN/triggers" "$CTX/packaging/DEBIAN/conffiles" "$STAGE/DEBIAN/"
 echo "Installed-Size: $(du -sk --exclude=DEBIAN "$STAGE" | cut -f1)" >> "$STAGE/DEBIAN/control"
 dpkg-deb --root-owner-group -Zxz --build "$STAGE" "$OUT/slozos-pro-desktop_${VERSION}_all.deb"
 ls -lh "$OUT"

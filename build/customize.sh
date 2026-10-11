@@ -22,17 +22,38 @@ log "Updates"
 KPKGS=$(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' 'linux-image-*' 'linux-modules-*' 'linux-headers-*' \
         'linux-generic*' 'linux-hwe*' 'linux-tools-*' 2>/dev/null | awk '$1 == "ii" {print $2}' || true)
 [[ -n $KPKGS ]] && apt-mark hold $KPKGS >/dev/null
-dpkg --add-architecture i386          # Steam's 32-bit libraries
 apt-get update -q
 "${APT[@]}" full-upgrade
 end
 
-# ── Apps: gaming + work ──────────────────────────────────────────────────────
-log "Apps"
-# Steam's licence prompt would block a non-interactive install
-echo 'steam steam/question select I AGREE' | debconf-set-selections
-echo 'steam steam/license note ' | debconf-set-selections
-"${APT[@]}" install steam-installer gamemode mangohud remmina
+# ── Lighter: drop what a normal desktop doesn't need ─────────────────────────
+log "Slim down"
+# Everything installed now counts as wanted, so removing a few packages can't
+# make apt "autoremove" whole chunks of Zorin OS along with them
+apt-mark manual $(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' | awk '$1 == "ii" {print $2}') >/dev/null
+# Games, and Snap (a second app store running in the background: the
+# Software app keeps Flatpak and regular packages)
+SLIM=(aisleriot gnome-mahjongg gnome-mines gnome-sudoku quadrapassel gnome-chess five-or-more four-in-a-row
+      hitori iagno lightsoff swell-foop tali gnome-robots gnome-klotski gnome-nibbles gnome-taquin gnome-tetravex
+      snapd gnome-software-plugin-snap)
+REMOVE=()
+for p in "${SLIM[@]}"; do dpkg -s "$p" >/dev/null 2>&1 && REMOVE+=("$p"); done
+if (( ${#REMOVE[@]} )); then "${APT[@]}" purge "${REMOVE[@]}"; fi
+rm -rf /snap /var/snap /var/lib/snapd /var/cache/snapd
+end
+
+# ── Apps + speed-ups ─────────────────────────────────────────────────────────
+log "Apps and speed-ups"
+# Remote Desktop for work; compressed RAM swap (zram) so 4 GB PCs stay smooth
+"${APT[@]}" install remmina systemd-zram-generator
+# Faster boot: don't wait for the network before showing the desktop
+systemctl disable NetworkManager-wait-online.service 2>/dev/null || true
+# No crash-report pop-ups
+[[ -f /etc/default/apport ]] && sed -i 's/^enabled=.*/enabled=0/' /etc/default/apport
+# No Ubuntu Pro adverts at login
+for f in /etc/xdg/autostart/ubuntu-advantage-notification.desktop; do
+    [[ -f $f ]] && { grep -q '^Hidden=true' "$f" || sed -i '/^\[Desktop Entry\]/a Hidden=true' "$f"; }
+done
 end
 
 # ── SlozOS Pro design + branding ─────────────────────────────────────────────

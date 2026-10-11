@@ -93,17 +93,16 @@ bash "$CTX/build/iso-branding.sh" "$ISO" "$VERSION"
 # "Check disc for defects" reads this
 (cd "$ISO" && find . -type f ! -name md5sum.txt ! -name boot.cat -print0 | sort -z | xargs -0 md5sum > md5sum.txt)
 
-# Same boot records as Zorin's ISO (BIOS isolinux + UEFI El Torito + GPT
-# hybrid), with our files mapped over the top
+# Same boot setup as Zorin's ISO: xorriso reports the exact mkisofs options
+# it was made with (BIOS isolinux, UEFI image in an appended GPT partition,
+# hybrid MBR). The UEFI partition and MBR are copied from Zorin's ISO by
+# reference (--interval:local_fs:…), everything else comes from our tree.
+BOOT_OPTS=$(xorriso -indev "$WORK/zorin.iso" -report_el_torito as_mkisofs 2>/dev/null \
+    | grep -v -e '^-V ' -e '^--modification-date=')
+echo "$BOOT_OPTS"
+# the boot catalog is written fresh
+rm -f "$ISO/isolinux/boot.cat" "$ISO/boot.catalog"
 rm -f "$OUT"
-xorriso -indev "$WORK/zorin.iso" -outdev "$OUT" \
-    -volid "SlozOS Pro $VERSION" \
-    -rm_r /casper /boot/grub/themes /.disk /md5sum.txt -- \
-    -map "$ISO/casper" /casper \
-    -map "$ISO/boot/grub" /boot/grub \
-    -map "$ISO/.disk" /.disk \
-    -map "$ISO/md5sum.txt" /md5sum.txt \
-    -map "$ISO/isolinux" /isolinux \
-    -boot_image any replay
+eval "xorriso -as mkisofs -r -J -joliet-long -V 'SlozOS Pro $VERSION' -o '$OUT' $(echo "$BOOT_OPTS" | tr '\n' ' ') '$ISO'"
 ls -lh "$OUT"
 end

@@ -5,10 +5,11 @@ Maintainer: SlozOS <https://github.com/JackachuYT/SlozOS-Pro>
 Section: misc
 Priority: optional
 Depends: gnome-shell (>= 46), plymouth, python3, libglib2.0-bin
-Recommends: steam-installer, gamemode, mangohud
+Recommends: systemd-zram-generator
 Homepage: https://github.com/JackachuYT/SlozOS-Pro
-Description: SlozOS Pro desktop: Windows 11-style design and branding
+Description: SlozOS Pro desktop: Windows 11-style design, tuning and branding
  The SlozOS Pro look for Zorin OS Core: a centred taskbar with a
  Windows 11-style Start menu, snap layouts, Fluent theme, icons and
  cursors, the Selawik font, SlozOS Pro wallpapers, boot splash and boot
- menu, and SlozOS Pro branding everywhere.
+ menu, and SlozOS Pro branding everywhere. Also tunes memory use
+ (compressed RAM swap) so the desktop stays quick on modest PCs.
