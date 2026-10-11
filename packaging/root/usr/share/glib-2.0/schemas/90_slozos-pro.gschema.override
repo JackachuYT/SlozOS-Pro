@@ -1,0 +1,121 @@
+# SlozOS Pro defaults — a Windows 11-style desktop on Zorin OS Core's GNOME.
+# Zorin's session is called "zorin" and its defaults use the :zorin
+# qualifier, so ours do too (and plain keys for other sessions/greeter).
+# Users' own changes always win over these.
+
+# ── Extensions: centred taskbar + Windows 11-style Start, snap layouts ───────
+[org.gnome.shell:zorin]
+enabled-extensions = ['dash-to-panel@jderose9.github.com', 'arcmenu@arcmenu.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'drive-menu@gnome-shell-extensions.gcampax.github.com', 'x11gestures@joseexposito.github.io', 'zorin-appindicator@zorinos.com', 'zorin-desktop-icons@zorinos.com', 'zorin-printers@zorinos.com', 'zorin-tiling-shell@zorinos.com']
+favorite-apps = ['org.gnome.Nautilus.desktop', 'brave-browser.desktop', 'org.gnome.Software.desktop', 'libreoffice-writer.desktop', 'org.gnome.Settings.desktop']
+welcome-dialog-last-shown-version = '999'
+
+[org.gnome.shell]
+favorite-apps = ['org.gnome.Nautilus.desktop', 'brave-browser.desktop', 'org.gnome.Software.desktop', 'libreoffice-writer.desktop', 'org.gnome.Settings.desktop']
+
+# ── Look: Fluent (light), Selawik ────────────────────────────────────────────
+[org.gnome.desktop.interface:zorin]
+gtk-theme = 'Fluent-round-Light'
+icon-theme = 'Fluent'
+cursor-theme = 'Fluent-cursors'
+font-name = 'Selawik 10'
+document-font-name = 'Selawik 10'
+color-scheme = 'default'
+
+[org.gnome.desktop.interface:GNOME-Greeter]
+gtk-theme = 'Fluent-round-Light'
+icon-theme = 'Fluent'
+cursor-theme = 'Fluent-cursors'
+font-name = 'Selawik 10'
+
+[org.gnome.desktop.wm.preferences:zorin]
+theme = 'Fluent-round-Light'
+titlebar-font = 'Selawik Semibold 10'
+button-layout = 'appmenu:minimize,maximize,close'
+
+[org.gnome.desktop.wm.preferences:GNOME-Greeter]
+theme = 'Fluent-round-Light'
+titlebar-font = 'Selawik Semibold 10'
+
+[org.gnome.shell.extensions.user-theme:zorin]
+name = 'Fluent-round-Light'
+
+[org.gnome.desktop.sound:zorin]
+theme-name = 'freedesktop'
+
+[org.gnome.desktop.sound]
+theme-name = 'freedesktop'
+
+# ── Wallpaper, lock screen, login screen ─────────────────────────────────────
+[org.gnome.desktop.background:zorin]
+picture-uri = 'file:///usr/share/backgrounds/slozos-pro/slozos-pro-light.jpg'
+picture-uri-dark = 'file:///usr/share/backgrounds/slozos-pro/slozos-pro-dark.jpg'
+picture-options = 'zoom'
+
+[org.gnome.desktop.background]
+picture-uri = 'file:///usr/share/backgrounds/slozos-pro/slozos-pro-light.jpg'
+picture-uri-dark = 'file:///usr/share/backgrounds/slozos-pro/slozos-pro-dark.jpg'
+picture-options = 'zoom'
+
+[org.gnome.desktop.screensaver:zorin]
+picture-uri = 'file:///usr/share/backgrounds/slozos-pro/slozos-pro-light.jpg'
+
+[org.gnome.desktop.screensaver]
+picture-uri = 'file:///usr/share/backgrounds/slozos-pro/slozos-pro-light.jpg'
+
+[org.gnome.login-screen]
+logo = '/usr/share/slozos-pro/login-logo.png'
+
+# ── Taskbar (Dash to Panel): bottom, centred, Start button beside the apps ──
+[org.gnome.shell.extensions.dash-to-panel:zorin]
+panel-positions = '{"0":"BOTTOM","1":"BOTTOM","2":"BOTTOM","3":"BOTTOM"}'
+panel-sizes = '{"0":48,"1":48,"2":48,"3":48}'
+panel-lengths = '{"0":100,"1":100,"2":100,"3":100}'
+panel-element-positions-monitors-sync = true
+panel-element-positions = '{"0":[{"element":"showAppsButton","visible":false,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"centered"},{"element":"taskbar","visible":true,"position":"centered"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}]}'
+appicon-margin = 2
+appicon-padding = 7
+dot-position = 'BOTTOM'
+dot-style-focused = 'DASHES'
+dot-style-unfocused = 'DOTS'
+dot-size = 3
+dot-color-override = true
+dot-color-1 = '#0067C0'
+dot-color-2 = '#0067C0'
+dot-color-3 = '#0067C0'
+dot-color-4 = '#0067C0'
+dot-color-unfocused-different = true
+dot-color-unfocused-1 = '#8A8A8A'
+dot-color-unfocused-2 = '#8A8A8A'
+dot-color-unfocused-3 = '#8A8A8A'
+dot-color-unfocused-4 = '#8A8A8A'
+focus-highlight = true
+focus-highlight-color = '#FFFFFF'
+focus-highlight-opacity = 60
+trans-use-custom-bg = true
+trans-bg-color = '#EEF2F7'
+trans-use-custom-opacity = true
+trans-panel-opacity = 0.82
+show-favorites = true
+show-running-apps = true
+group-apps = true
+isolate-workspaces = false
+show-window-previews = true
+show-tooltip = true
+animate-appicon-hover = false
+stockgs-keep-top-panel = false
+intellihide = false
+showdesktop-button-width = 6
+show-showdesktop-hover = true
+global-border-radius = 0
+
+# ── Start menu (ArcMenu, Windows 11-style layout) ────────────────────────────
+[org.gnome.shell.extensions.arcmenu:zorin]
+menu-layout = '11'
+position-in-panel = 'Left'
+menu-button-appearance = 'Icon'
+menu-button-icon = '/usr/share/slozos-pro/start-button.png'
+menu-button-icon-size = 28
+arcmenu-hotkey = ['Super_L']
+search-provider-recent-files = true
+pinned-apps = [{'id': 'org.gnome.Nautilus.desktop'}, {'id': 'brave-browser.desktop'}, {'id': 'org.gnome.Software.desktop'}, {'id': 'libreoffice-writer.desktop'}, {'id': 'libreoffice-calc.desktop'}, {'id': 'libreoffice-impress.desktop'}, {'id': 'org.gnome.Evolution.desktop'}, {'id': 'org.gnome.Settings.desktop'}, {'id': 'org.gnome.Calculator.desktop'}, {'id': 'org.gnome.TextEditor.desktop'}, {'id': 'org.gnome.Calendar.desktop'}, {'id': 'org.gnome.Terminal.desktop'}]
+eleven-layout-extra-shortcuts = [{'id': 'org.gnome.Settings.desktop'}, {'id': 'org.gnome.Nautilus.desktop'}]
