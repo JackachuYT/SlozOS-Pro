@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# SlozOS Pro per-login tuning (autostart), from what slozos-pro-hardware found
+# at boot. Each change happens once per account; changing it back yourself
+# sticks.
+#   graphics light → pearOS's Liquid Gel glass only on its own apps (not
+#                    every window) and without refraction: smooth on an
+#                    Intel HD 4000 like the Surface Pro 1's
+#   profile light  → no file indexer for the Files app (search still works,
+#                    it just looks through folders instead of an index)
+set -u
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/slozos-pro"
+mkdir -p "$STATE"
+GRAPHICS=$(cat /run/slozos-pro/graphics 2>/dev/null || echo full)
+PROFILE=$(cat /run/slozos-pro/profile 2>/dev/null || echo full)
+
+if [[ $GRAPHICS == light && ! -f $STATE/light-graphics ]]; then
+    kwriteconfig6 --file kwinrc --group Effect-blurplus --key BlurNonMatching false
+    kwriteconfig6 --file kwinrc --group Effect-blurplus --key RefractionStrength 0
+    QDBUS=$(command -v qdbus6 || command -v qdbus-qt6 || echo qdbus)
+    "$QDBUS" org.kde.KWin /KWin reconfigure >/dev/null 2>&1
+    touch "$STATE/light-graphics"
+fi
+
+if [[ $PROFILE == light && ! -f $STATE/light-profile ]]; then
+    systemctl --user mask --now localsearch-3.service >/dev/null 2>&1
+    touch "$STATE/light-profile"
+fi

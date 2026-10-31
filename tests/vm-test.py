@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
-"""Boot the SlozOS Pro ISO's live desktop in QEMU and take screenshots.
+"""Boot the SlozOS Pro ISO in QEMU (UEFI, like a Surface Pro 1) and take
+screenshots of the boot menu, boot and live desktop.
 
     vm-test.py <iso> <outdir>
-
-Boots casper/vmlinuz + initrd straight from the ISO without "maybe-ubiquity",
-so the live desktop shows instead of the Try/Install dialog, then:
-  01-boot.png, 02-desktop.png (settled), 03-start.png (Start menu open)
 """
 import json, os, shutil, socket, subprocess, sys, tempfile, time
 
 iso, out = sys.argv[1], sys.argv[2]
 os.makedirs(out, exist_ok=True)
 tmp = tempfile.mkdtemp()
-for f in ("casper/vmlinuz", "casper/initrd.zstd"):
-    subprocess.run(["xorriso", "-osirrox", "on", "-indev", iso, "-extract", "/" + f,
-                    os.path.join(tmp, os.path.basename(f))], check=True, capture_output=True)
+code = "/usr/share/OVMF/OVMF_CODE_4M.fd"
+vars_ = os.path.join(tmp, "vars.fd")
+shutil.copy("/usr/share/OVMF/OVMF_VARS_4M.fd", vars_)
 
 qmp_path = os.path.join(tmp, "qmp.sock")
 accel = ["-accel", "kvm", "-cpu", "host"] if os.access("/dev/kvm", os.W_OK) else ["-accel", "tcg"]
-vm = subprocess.Popen(["qemu-system-x86_64", "-machine", "q35", *accel, "-m", "6144", "-smp", "4",
-                       "-kernel", os.path.join(tmp, "vmlinuz"), "-initrd", os.path.join(tmp, "initrd.zstd"),
-                       "-append", "boot=casper quiet splash ---",
+vm = subprocess.Popen(["qemu-system-x86_64", "-machine", "q35", *accel, "-m", "4096", "-smp", "2",
+                       "-drive", f"if=pflash,format=raw,readonly=on,file={code}",
+                       "-drive", f"if=pflash,format=raw,file={vars_}",
                        "-drive", f"file={iso},media=cdrom,readonly=on",
                        "-device", "virtio-vga", "-display", "none",
                        "-device", "qemu-xhci", "-device", "usb-tablet", "-device", "usb-kbd",
                        "-nic", "user,model=virtio-net-pci",
                        "-qmp", f"unix:{qmp_path},server=on,wait=off",
                        "-serial", f"file:{os.path.join(out, 'serial.log')}"])
-
 for _ in range(100):
     if os.path.exists(qmp_path):
         break
@@ -45,10 +41,10 @@ def shot(name):
     print("  📸", name, flush=True)
 
 try:
-    time.sleep(45); shot("01-boot.png")
-    time.sleep(150); shot("02-desktop.png")
-    cmd("send-key", keys=[{"type": "qcode", "data": "meta_l"}])   # Windows key → Start
-    time.sleep(5); shot("03-start.png")
+    time.sleep(4);   shot("01-boot-menu.png")
+    time.sleep(30);  shot("02-booting.png")
+    time.sleep(120); shot("03-desktop.png")
+    time.sleep(60);  shot("04-desktop-settled.png")
 finally:
     vm.kill()
     shutil.rmtree(tmp, ignore_errors=True)

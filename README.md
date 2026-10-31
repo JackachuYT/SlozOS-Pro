@@ -1,42 +1,50 @@
-# SlozOS Pro
+# SlozOS Pro — "ByteYum"
 
-**A beginner-friendly, lightweight desktop OS for everyday use and work, designed like Windows 11.**
-Built on [Zorin OS](https://zorin.com/os/) 18.1 Core, which is built on Ubuntu 24.04 LTS (supported until 2029).
+**A touch-first, lightweight desktop for small tablets and laptops.**
+Built on [pearOS](https://pearos.xyz) NiceC0re (Arch Linux + KDE Plasma 6), tuned for the Microsoft Surface Pro 1 and other 4 GB devices. Roughly two-thirds touch, one-third keyboard and mouse.
 
-- 🪟 **Feels like Windows 11:** the Start button and your apps sit in the middle of the taskbar. The Windows key opens a Start menu with pinned apps, recommended files and search. Drag a window to the top of the screen for snap layouts.
-- 🎨 **Fluent look:** rounded corners, a translucent taskbar, Fluent theme, icons and cursors, the Selawik font, and SlozOS Pro's own wallpapers.
-- 💼 **Ready for work:** LibreOffice (opens and saves Word, Excel and PowerPoint files), email and calendar, Remote Desktop, the Brave web browser.
-- 🪶 **Light and quick:** compressed RAM swap keeps 4 GB PCs smooth, the desktop doesn't wait for the network to start, and there is no Snap running in the background, and no games, crash pop-ups or adverts. Choose **NVIDIA graphics** on the boot menu if you have an NVIDIA card.
-- 🔄 **Updates in the Software app:** Ubuntu and Zorin security updates, plus SlozOS Pro's own design updates.
+- 👆 **Touch first:** take the keyboard off and it switches to tablet mode, with bigger controls. A keyboard pops up when you tap a text box, including on the login screen. The screen follows when you turn it, and you can swipe up from the bottom edge to see all your windows.
+- ⌨️ **Still great with a keyboard:** clip the Type Cover back on (or plug in a mouse) and it's a normal desktop again.
+- 🪶 **Quick on 4 GB:** compressed RAM swap, no file indexing in the background, and lighter glass effects on older graphics like the Surface Pro 1's.
+- 💻 **Surface Pro 1/2 fixes:** no more going straight back to sleep after waking (the firmware sends a false "lid closed"), reliable Marvell Wi-Fi, deep sleep.
+- 🐞 **Fixes over pearOS:**
+  - **Lock screen:** uses Arch's own lock screen, because pearOS's fork often refuses the password ([pearOS-archlinux/iso#142](https://github.com/pearOS-archlinux/iso/issues/142)).
+  - **Booting:** uses Arch's standard boot loaders, and adds a safe-graphics boot option.
+  - **Tablet mode:** no longer forced off.
+- 🍐 **New look:** the SlozOS Pro "ByteYum" wallpapers (pear-coloured liquid glass) and SlozOS branding, on pearOS's macOS-style desktop.
 
 ## Download and install
 
-1. Download **all** the `.7z.00x` parts of the latest release from [**Releases**](https://github.com/JackachuYT/SlozOS-Pro/releases) into one folder. Each part is under GitHub's 2 GB limit.
+1. Download **all** the `.7z.00x` parts of the latest release from [**Releases**](https://github.com/JackachuYT/SlozOS-Pro/releases) into one folder.
 2. Put them back together:
-   - **Windows:** install [7-Zip](https://www.7-zip.org/), then right-click the `.001` file → **7-Zip** → **Extract Here**. The `7z` command isn't available in a terminal on Windows, so use the right-click menu.
+   - **Windows:** install [7-Zip](https://www.7-zip.org/), then right-click the `.001` file → **7-Zip** → **Extract Here**
    - **macOS:** open the `.001` file with [Keka](https://www.keka.io/)
-   - **Linux:** `7z x SlozOS-Pro-1.0-amd64.7z.001`
-3. Flash `SlozOS-Pro-1.0-amd64.iso` to a USB stick (8 GB+) with [Balena Etcher](https://etcher.balena.io/).
-4. Boot from the USB stick and choose **Try or Install SlozOS Pro**.
+   - **Linux:** `7z x SlozOS-Pro-1.0-ByteYum-x86_64.7z.001`
+3. Flash the `.iso` to a USB stick (8 GB+) with [Balena Etcher](https://etcher.balena.io/).
+4. **Surface Pro 1:**
+   - Hold **Volume Up** while pressing **Power** to open the firmware settings, and turn **Secure Boot off**.
+   - Then hold **Volume Down** while pressing **Power** to boot from the USB stick.
+5. Choose **Try or Install SlozOS Pro**, then tap **Install SlozOS Pro** on the desktop.
 
 ## How it's built
 
-Everything is automated in GitHub Actions (`.github/workflows/build.yml`):
+GitHub Actions builds everything in an Arch Linux container (`.github/workflows/build.yml`, `build/ci-build.sh`):
 
-| Step | What happens |
+| Part | What it is |
 |---|---|
-| `build/build-deb.sh` | Builds `slozos-pro-desktop`, the SlozOS Pro design, tuning and branding as one Debian package: the pinned Fluent theme, icons and cursors, the GNOME extensions in `build/extensions.txt`, SlozOS Pro's defaults (`90_slozos-pro.gschema.override`), memory tuning, wallpapers, boot splash and boot menu |
-| `build/remaster.sh` | Downloads Zorin OS Core (checked against its SHA256), unpacks it, runs `build/customize.sh` inside it, repacks it, and writes an ISO that boots exactly like Zorin's |
-| `tests/vm-test.py` | Boots the new ISO's live desktop in QEMU and takes screenshots |
+| `profile/` | The live ISO (an [archiso](https://gitlab.archlinux.org/archlinux/archiso) profile). Its skeleton is Arch's `releng` profile; it installs pearOS's desktop packages, trimmed for small devices, plus the touch packages (KDE's on-screen keyboard and screen rotation) |
+| `pkgbuilds/slozos-pro-settings` | pearOS's desktop design (GPL-3.0) with SlozOS Pro wallpapers and logos, touch-first defaults, and without pearOS's custom-licensed apps |
+| `pkgbuilds/slozos-pro-system` | Branding, the Surface fixes, the touch-friendly login screen, memory tuning and the boot splash |
+| `pkgbuilds/slozos-pro-installer` | The installer's settings and look (Calamares), written for SlozOS Pro |
+| `tests/vm-test.py` | Boots the ISO in a UEFI virtual machine and takes screenshots |
 
-Branding is re-applied automatically: `slozos-pro-desktop` watches for updates (dpkg triggers) that bring Zorin names back, and runs `/usr/lib/slozos-pro/brand` again.
+Installed systems get updates from Arch Linux, CachyOS and pearOS like any pearOS install. SlozOS Pro's own three packages come from the `repo` release on this page.
 
 ## Credits
 
-- [Zorin OS](https://zorin.com/os/) Core by Zorin Technology Group: the base system (free edition)
-- [Ubuntu](https://ubuntu.com) by Canonical
-- [Fluent GTK theme](https://github.com/vinceliuice/Fluent-gtk-theme) and [Fluent icon theme](https://github.com/vinceliuice/Fluent-icon-theme) by Vince Liuice (GPL-3.0)
-- [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel) and [ArcMenu](https://gitlab.com/arcmenu/ArcMenu) (GPL)
-- [Selawik](https://github.com/microsoft/Selawik) font by Microsoft (SIL Open Font License)
+- [pearOS](https://github.com/pearOS-archlinux) NiceC0re by the Pear Project: desktop design and apps (GPL-3.0 / MIT)
+- [Arch Linux](https://archlinux.org) and [archiso](https://gitlab.archlinux.org/archlinux/archiso) (GPL-3.0)
+- [CachyOS](https://cachyos.org): the optimised kernel
+- [KDE Plasma](https://kde.org/plasma-desktop/) and [Calamares](https://calamares.io)
 
-SlozOS Pro is an independent project. It is not affiliated with, or endorsed by, Zorin Technology Group Ltd., Canonical or Microsoft. Zorin OS is a trademark of Zorin Technology Group Ltd.; Ubuntu is a trademark of Canonical Ltd.; Windows is a trademark of Microsoft Corporation. SlozOS Pro does not include any software from Zorin OS Pro.
+SlozOS Pro is an independent project. It is not affiliated with, or endorsed by, the pearOS project, Arch Linux, CachyOS or Apple. SlozOS Pro doesn't ship pearOS's custom-licensed apps (calculator, notch, installer settings, live-CD desktop), or the Apple wallpapers included in pearOS.

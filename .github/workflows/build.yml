@@ -1,11 +1,12 @@
 name: Build SlozOS Pro
 
 # Every pull request builds the ISO and boots it in a VM (screenshots in the
-# run's artifacts). Pushes to main also publish the release.
+# run's artifacts). Pushes to main also publish the release, and SlozOS Pro's
+# own packages to the "repo" release that installed systems update from.
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', '.github/workflows/inspect.yml']
+    paths-ignore: ['**.md']
   pull_request:
   workflow_dispatch:
 
@@ -23,34 +24,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Make room and install tools
+      - name: Make room
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          sudo apt-get update -q
-          sudo apt-get install -y -q squashfs-tools xorriso unzip p7zip-full qemu-system-x86 sassc
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
-          sudo mkdir -p /mnt/w && sudo chown "$USER" /mnt/w
-          echo "VERSION=$(cat build/version)" >> "$GITHUB_ENV"
+          sudo docker image prune --all --force >/dev/null
+          sudo mkdir -p /mnt/work
+          echo "VERSION=$(cat VERSION)" >> "$GITHUB_ENV"
           df -h / /mnt
 
-      - name: Zorin OS Core ISO (cached)
-        id: zorin
-        uses: actions/cache@v4
-        with:
-          path: /mnt/w/zorin.iso
-          key: zorin-${{ hashFiles('build/zorin.env') }}
-
-      - name: Build slozos-pro-desktop package
-        run: bash build/build-deb.sh "$VERSION" out
-
-      - name: Remaster the ISO
-        run: sudo bash build/remaster.sh /mnt/w "$VERSION"
+      - name: Build packages and ISO (Arch Linux container)
+        run: |
+          sudo docker run --rm --privileged -v "$PWD:/src" -v /mnt/work:/work archlinux:latest \
+            bash /src/build/ci-build.sh "$VERSION" "${{ github.run_number }}"
+          sudo chown -R "$USER" /mnt/work/out
+          ISO=$(ls /mnt/work/out/*.iso)
+          mv "$ISO" "/mnt/work/out/SlozOS-Pro-$VERSION-ByteYum-x86_64.iso"
+          ls -lh /mnt/work/out
 
       - name: Boot it in a VM
         run: |
-          sudo python3 tests/vm-test.py "/mnt/w/SlozOS-Pro-$VERSION-amd64.iso" vm-test
-          sudo chown -R "$USER" vm-test
+          sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 ovmf p7zip-full
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+          python3 tests/vm-test.py /mnt/work/out/SlozOS-Pro-*.iso vm-test
 
       - name: Upload VM screenshots
         if: always()
@@ -62,10 +58,11 @@ jobs:
 
       - name: Split the ISO for GitHub (2 GB per file)
         run: |
-          cd /mnt/w
-          7z a -mx=0 -v1900m "SlozOS-Pro-$VERSION-amd64.7z" "SlozOS-Pro-$VERSION-amd64.iso" >/dev/null
-          sha256sum "SlozOS-Pro-$VERSION-amd64.iso" > "SlozOS-Pro-$VERSION-amd64.iso.sha256"
-          ls -lh SlozOS-Pro-*
+          cd /mnt/work/out
+          ISO=SlozOS-Pro-$VERSION-ByteYum-x86_64.iso
+          7z a -mx=0 -v1900m "${ISO%.iso}.7z" "$ISO" >/dev/null
+          sha256sum "$ISO" > "$ISO.sha256"
+          ls -lh
 
       - name: Upload ISO (pull requests)
         if: github.event_name == 'pull_request'
@@ -73,8 +70,8 @@ jobs:
         with:
           name: SlozOS-Pro-ISO
           path: |
-            /mnt/w/SlozOS-Pro-*.7z.*
-            /mnt/w/SlozOS-Pro-*.sha256
+            /mnt/work/out/*.7z.*
+            /mnt/work/out/*.sha256
           compression-level: 0
           retention-days: 7
 
@@ -83,23 +80,33 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           NOTES: |
-            **SlozOS Pro ${{ env.VERSION }}**: a beginner-friendly, lightweight desktop OS for everyday use and work, designed like Windows 11, built on Zorin OS Core 18.1 (Ubuntu 24.04 LTS, supported until 2029).
+            **SlozOS Pro ${{ env.VERSION }} "ByteYum"**: a touch-first, lightweight desktop built on pearOS NiceC0re (Arch Linux + KDE Plasma 6), tuned for small tablets like the Surface Pro 1.
 
-            - Centred taskbar, Windows 11-style Start menu (Windows key), snap layouts, translucent taskbar
-            - Fluent theme, icons and cursors, Selawik font, SlozOS Pro wallpapers
-            - Work: LibreOffice, email, calendar, Remote Desktop, the Brave web browser
-            - Light and quick: compressed RAM swap for 4 GB PCs, faster boot, no Snap running in the background, no games, crash pop-ups or adverts; NVIDIA option on the boot menu
+            - **Touch first:** tablet mode switches on when you take the keyboard off, the on-screen keyboard appears when you tap a text box (login screen included), the screen rotates, and you can swipe up from the bottom edge for all your windows
+            - **Surface Pro 1/2:** no more sleeping again straight after waking (bogus lid signal), reliable Marvell Wi-Fi, deep sleep
+            - **Quick on 4 GB:** compressed RAM swap, no file indexing in the background, lighter glass effects on older graphics
+            - **Fixes over pearOS:** Arch's own lock screen (pearOS's fork often refuses passwords, pearOS-archlinux/iso#142), Arch's standard boot loaders, tablet mode no longer forced off
+            - **New:** SlozOS Pro "ByteYum" wallpapers and branding
 
             **Download all parts into one folder**, then reassemble:
-            - **Windows:** install [7-Zip](https://www.7-zip.org/), then right-click `SlozOS-Pro-${{ env.VERSION }}-amd64.7z.001` → **7-Zip** → **Extract Here**
+            - **Windows:** install [7-Zip](https://www.7-zip.org/), then right-click the `.7z.001` file → **7-Zip** → **Extract Here**
             - **macOS:** open the `.001` file with [Keka](https://www.keka.io/)
-            - **Linux:** `7z x SlozOS-Pro-${{ env.VERSION }}-amd64.7z.001`
+            - **Linux:** `7z x SlozOS-Pro-${{ env.VERSION }}-ByteYum-x86_64.7z.001`
 
-            Flash `SlozOS-Pro-${{ env.VERSION }}-amd64.iso` with Balena Etcher, boot from the USB stick and choose **Try or Install SlozOS Pro**.
+            Flash the `.iso` with Balena Etcher. On a Surface Pro 1, turn **Secure Boot off** first (hold Volume Up while pressing Power to open the firmware settings), then boot from the USB stick with Volume Down + Power.
 
-            SlozOS Pro is an independent project, not affiliated with or endorsed by Zorin Technology Group Ltd., Canonical or Microsoft.
+            SlozOS Pro is an independent project, not affiliated with or endorsed by the pearOS project, Arch Linux or Apple.
         run: |
+          cd /mnt/work/out
           TAG="v$VERSION"
           gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "$TAG" --title "SlozOS Pro $VERSION" --notes "$NOTES" --latest \
-            /mnt/w/SlozOS-Pro-*.7z.* /mnt/w/SlozOS-Pro-*.sha256 out/slozos-pro-desktop_*_all.deb
+          gh release create "$TAG" --title "SlozOS Pro $VERSION ByteYum" --notes "$NOTES" --latest \
+            ./*.7z.* ./*.sha256
+          # The package repository installed systems update from (pacman.conf: [slozos-pro])
+          mkdir -p repo && cp packages/*.pkg.tar.zst repo/
+          sudo docker run --rm -v "$PWD/repo:/repo" archlinux:latest \
+            bash -c 'cd /repo && repo-add -q slozos-pro.db.tar.gz ./*.pkg.tar.zst && rm -f slozos-pro.db slozos-pro.files && cp slozos-pro.db.tar.gz slozos-pro.db && cp slozos-pro.files.tar.gz slozos-pro.files'
+          sudo chown -R "$USER" repo
+          gh release view repo >/dev/null 2>&1 || gh release create repo --title "SlozOS Pro package repository" \
+            --notes "Package repository for installed SlozOS Pro systems (used by pacman). Not a download." --prerelease
+          gh release upload repo repo/* --clobber

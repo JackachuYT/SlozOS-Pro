@@ -1,0 +1,4 @@
+# SlozOS Pro: no file indexing by default (it eats CPU and battery on small
+# PCs). Turn it on in System Settings → Search → File Search.
+[Basic Settings]
+Indexing-Enabled=false

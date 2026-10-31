@@ -1,0 +1,23 @@
+# SlozOS Pro installer settings and look for Calamares (pearOS NiceC0re's
+# Calamares build). Written for SlozOS Pro; installs the live system offline.
+# build/build-packages.sh copies the artwork into ./artwork first.
+pkgname=slozos-pro-installer
+pkgver=1.0
+pkgrel=1
+pkgdesc="SlozOS Pro installer (Calamares settings, branding and slideshow)"
+arch=('any')
+url="https://github.com/JackachuYT/SlozOS-Pro"
+license=('GPL-3.0-or-later')
+depends=('calamares')
+conflicts=('pear-calamares-config')
+
+package() {
+    local art="$startdir/artwork"
+    install -dm755 "$pkgdir/etc/calamares"
+    cp -r "$startdir/calamares/." "$pkgdir/etc/calamares/"
+    local b="$pkgdir/etc/calamares/branding/slozos-pro"
+    install -Dm644 "$art/logo-tile-512.png"  "$b/logo.png"
+    install -Dm644 "$art/welcome.png"        "$b/welcome.png"
+    install -Dm644 "$art/byteyum-dark.jpg"   "$b/background.jpg"
+    chmod -R a+rX,go-w "$pkgdir"
+}

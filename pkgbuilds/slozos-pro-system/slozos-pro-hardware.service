@@ -1,0 +1,13 @@
+[Unit]
+Description=SlozOS Pro hardware setup (device fixes, performance profile)
+DefaultDependencies=no
+After=local-fs.target systemd-udev-trigger.service
+Before=systemd-logind.service NetworkManager.service display-manager.service sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/slozos-pro/hardware
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

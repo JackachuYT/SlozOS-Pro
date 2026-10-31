@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# SlozOS Pro branding: the system says SlozOS Pro, not Arch Linux or pearOS.
+# Run when slozos-pro-system installs, and by a pacman hook whenever an
+# update rewrites these files (zz-slozos-pro-brand.hook). Idempotent.
+set -u
+VERSION=$(cat /usr/share/slozos-pro/version 2>/dev/null || echo 1.0)
+CODENAME=$(cat /usr/share/slozos-pro/codename 2>/dev/null || echo ByteYum)
+GH=https://github.com/JackachuYT/SlozOS-Pro
+
+cat > /usr/lib/os-release <<OSR
+NAME="SlozOS Pro"
+PRETTY_NAME="SlozOS Pro $VERSION ($CODENAME)"
+ID=slozos-pro
+ID_LIKE=arch
+BUILD_ID=rolling
+VERSION="$VERSION ($CODENAME)"
+VERSION_ID=$VERSION
+VERSION_CODENAME=${CODENAME,,}
+ANSI_COLOR="38;2;142;196;64"
+HOME_URL="$GH"
+DOCUMENTATION_URL="$GH#readme"
+SUPPORT_URL="$GH/issues"
+BUG_REPORT_URL="$GH/issues"
+LOGO=slozos-pro-logo
+OSR
+[[ -e /etc/os-release ]] || ln -s ../usr/lib/os-release /etc/os-release
+
+if [[ -f /etc/lsb-release ]]; then
+    cat > /etc/lsb-release <<LSB
+DISTRIB_ID="SlozOS-Pro"
+DISTRIB_RELEASE="$VERSION"
+DISTRIB_CODENAME=${CODENAME,,}
+DISTRIB_DESCRIPTION="SlozOS Pro $VERSION ($CODENAME)"
+LSB
+fi
+printf 'SlozOS Pro %s (\\l)\n\n' "$VERSION" > /etc/issue
+exit 0

@@ -1,0 +1,36 @@
+---
+componentName: slozos-pro
+
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 920px,640px
+windowPlacement: center
+sidebar: widget
+navigation: widget
+
+strings:
+    productName:         SlozOS Pro
+    shortProductName:    SlozOS Pro
+    version:             1.0 (ByteYum)
+    shortVersion:        1.0
+    versionedName:       SlozOS Pro 1.0 ByteYum
+    shortVersionedName:  SlozOS Pro 1.0
+    bootloaderEntryName: SlozOS-Pro
+    productUrl:          https://github.com/JackachuYT/SlozOS-Pro
+    supportUrl:          https://github.com/JackachuYT/SlozOS-Pro/issues
+    releaseNotesUrl:     https://github.com/JackachuYT/SlozOS-Pro/releases
+
+images:
+    productLogo:    "logo.png"
+    productIcon:    "logo.png"
+    productWelcome: "welcome.png"
+
+slideshow: "show.qml"
+slideshowAPI: 2
+
+style:
+    SidebarBackground:        "#10201a"
+    SidebarText:              "#FFFFFF"
+    SidebarTextCurrent:       "#10201a"
+    SidebarBackgroundCurrent: "#9ccc4a"

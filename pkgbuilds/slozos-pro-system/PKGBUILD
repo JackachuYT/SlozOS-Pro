@@ -1,0 +1,72 @@
+# SlozOS Pro system: branding, Surface Pro 1/2 fixes, touch setup (on-screen
+# keyboard at login, tablet mode, auto-rotate), and tuning for small PCs.
+# build/build-packages.sh copies the artwork into ./artwork first.
+pkgname=slozos-pro-system
+pkgver=1.0
+pkgrel=1
+pkgdesc="SlozOS Pro system: branding, Surface fixes, touch setup and tuning"
+arch=('any')
+url="https://github.com/JackachuYT/SlozOS-Pro"
+license=('GPL-3.0-or-later')
+depends=('kconfig' 'plymouth' 'zram-generator' 'sddm' 'qt6-virtualkeyboard' 'plasma-keyboard'
+         'iio-sensor-proxy' 'networkmanager' 'power-profiles-daemon' 'linux-firmware-marvell')
+backup=('etc/sddm.conf.d/10-slozos-pro.conf' 'etc/xdg/baloofilerc')
+install=slozos-pro-system.install
+source=('brand' 'zz-slozos-pro-brand.hook' 'kcm-about-distrorc'
+        'hardware' 'slozos-pro-hardware.service' 'slozos-pro-mwifiex.conf' '81-slozos-pro-mwifiex.rules'
+        'session' 'slozos-pro-session.desktop'
+        'zram-generator.conf' '90-slozos-pro.conf' 'baloofilerc'
+        '10-slozos-pro.conf' 'theme.conf.user'
+        'slozos-pro.gpg' 'slozos-pro-trusted' 'slozos-pro-revoked'
+        'slozos-pro.plymouth' 'slozos-pro.script')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP'
+            'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    local art="$startdir/artwork"
+    cd "$srcdir"
+    echo "$pkgver"  | install -Dm644 /dev/stdin "$pkgdir/usr/share/slozos-pro/version"
+    echo "ByteYum"  | install -Dm644 /dev/stdin "$pkgdir/usr/share/slozos-pro/codename"
+
+    # Branding
+    install -Dm755 brand                      "$pkgdir/usr/lib/slozos-pro/brand"
+    install -Dm644 zz-slozos-pro-brand.hook   "$pkgdir/usr/share/libalpm/hooks/zz-slozos-pro-brand.hook"
+    install -Dm644 kcm-about-distrorc         "$pkgdir/etc/xdg/kcm-about-distrorc"
+    local d
+    for d in "$art"/icons/*/; do
+        install -Dm644 "$d/slozos-pro-logo.png" "$pkgdir/usr/share/icons/hicolor/$(basename "$d")/apps/slozos-pro-logo.png"
+    done
+
+    # Hardware: Surface fixes, profile, graphics (enabled statically)
+    install -Dm755 hardware                    "$pkgdir/usr/lib/slozos-pro/hardware"
+    install -Dm644 slozos-pro-hardware.service "$pkgdir/usr/lib/systemd/system/slozos-pro-hardware.service"
+    install -dm755 "$pkgdir/usr/lib/systemd/system/sysinit.target.wants"
+    ln -s ../slozos-pro-hardware.service "$pkgdir/usr/lib/systemd/system/sysinit.target.wants/slozos-pro-hardware.service"
+    install -Dm644 slozos-pro-mwifiex.conf     "$pkgdir/usr/lib/modprobe.d/slozos-pro-mwifiex.conf"
+    install -Dm644 81-slozos-pro-mwifiex.rules "$pkgdir/usr/lib/udev/rules.d/81-slozos-pro-mwifiex.rules"
+
+    # Per-login tuning
+    install -Dm755 session                     "$pkgdir/usr/lib/slozos-pro/session"
+    install -Dm644 slozos-pro-session.desktop  "$pkgdir/etc/xdg/autostart/slozos-pro-session.desktop"
+
+    # Memory and indexing
+    install -Dm644 zram-generator.conf "$pkgdir/usr/lib/systemd/zram-generator.conf"
+    install -Dm644 90-slozos-pro.conf  "$pkgdir/usr/lib/sysctl.d/90-slozos-pro.conf"
+    install -Dm644 baloofilerc         "$pkgdir/etc/xdg/baloofilerc"
+
+    # Touch-friendly login screen
+    install -Dm644 10-slozos-pro.conf  "$pkgdir/etc/sddm.conf.d/10-slozos-pro.conf"
+    install -Dm644 theme.conf.user     "$pkgdir/usr/share/sddm/themes/breeze/theme.conf.user"
+
+    # Trust the inled repository pearOS's packages come from
+    install -Dm644 slozos-pro.gpg      "$pkgdir/usr/share/pacman/keyrings/slozos-pro.gpg"
+    install -Dm644 slozos-pro-trusted  "$pkgdir/usr/share/pacman/keyrings/slozos-pro-trusted"
+    install -Dm644 slozos-pro-revoked  "$pkgdir/usr/share/pacman/keyrings/slozos-pro-revoked"
+
+    # Boot splash
+    install -Dm644 slozos-pro.plymouth "$pkgdir/usr/share/plymouth/themes/slozos-pro/slozos-pro.plymouth"
+    install -Dm644 slozos-pro.script   "$pkgdir/usr/share/plymouth/themes/slozos-pro/slozos-pro.script"
+    install -Dm644 "$art/plymouth/logo.png"      "$pkgdir/usr/share/plymouth/themes/slozos-pro/logo.png"
+    install -Dm644 "$art/plymouth/bar-fill.png"  "$pkgdir/usr/share/plymouth/themes/slozos-pro/bar-fill.png"
+    install -Dm644 "$art/plymouth/bar-track.png" "$pkgdir/usr/share/plymouth/themes/slozos-pro/bar-track.png"
+}
