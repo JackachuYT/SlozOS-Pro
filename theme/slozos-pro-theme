@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────────────────────
+# SlozOS Pro theme for pearOS: changes the name and logo to SlozOS Pro and
+# nothing else.
+#
+#   slozos-pro-theme apply     put SlozOS Pro's name and logo in place
+#   slozos-pro-theme restore   put pearOS's originals back (on uninstall)
+#
+# apply runs when the package installs, and again from a pacman hook whenever
+# a pearOS/Arch update brings one of these files back. pearOS's originals are
+# kept in /var/lib/slozos-pro-theme/originals. SLOZOS_PRO_THEME_ROOT points
+# everything at a test tree instead of /.
+# ──────────────────────────────────────────────────────────────────────────────
+set -uo pipefail
+ROOT=${SLOZOS_PRO_THEME_ROOT:-}
+ART=$ROOT/usr/share/slozos-pro-theme
+STATE=$ROOT/var/lib/slozos-pro-theme
+ORIGINALS=$STATE/originals     # pearOS's files, as they were
+WRITTEN=$STATE/written         # checksums of what we wrote (to tell ours from pearOS's)
+
+# Logos: <file on pearOS>|<SlozOS Pro replacement in $ART>
+LOGOS=(
+    "usr/share/pixmaps/nicec0re-logo.png|logo-tile-1024.png"
+    "usr/share/icons/piri-logo.png|logo-tile-512.png"
+    "usr/share/extras/release_logo.png|logo-tile-1024.png"
+    "usr/share/extras/pearos_cropped_transparent.png|logo-white-512.png"
+    "usr/share/extras/Pearos_fullscreen_non-transparent.png.png.png|logo-fullscreen.png"
+    "usr/share/extras/pearlogo.svg|logo-white.svg"
+    "usr/share/extras/drawing.svg|logo-white.svg"
+    "usr/share/extras/drawing-black.svg|logo-black.svg"
+    "usr/share/plasma/look-and-feel/pearOS/contents/splash/images/drawing.svg|logo-white.svg"
+    "usr/share/plasma/look-and-feel/pearOS-dark/contents/splash/images/drawing.svg|logo-white.svg"
+    "usr/share/plymouth/themes/pear-plymouth/boot.png|boot.png"
+    "usr/share/plymouth/themes/pear-plymouth/logo.svg|logo-white.svg"
+)
+
+# Names: <file on pearOS>|<sed script>
+NAMES=(
+    'usr/lib/os-release|s/^NAME=.*/NAME="SlozOS Pro"/; s/^PRETTY_NAME=.*/PRETTY_NAME="SlozOS Pro"/; s/^LOGO=.*/LOGO=slozos-pro-logo/'
+    'etc/lsb-release|s/^DISTRIB_ID=.*/DISTRIB_ID=SlozOS-Pro/; s/^DISTRIB_DESCRIPTION=.*/DISTRIB_DESCRIPTION="SlozOS Pro"/'
+    'etc/issue|s/pearOS NiceC0re/SlozOS Pro/'
+    'usr/share/plasma/plasmoids/xyz.pearos.pearmenu/contents/ui/MainMenuButton.qml|s/i18n("About This Pear")/i18n("About SlozOS Pro")/'
+    'usr/share/plasma/look-and-feel/pearOS/metadata.json|s/"pearOS Splash Theme for Plasma"/"SlozOS Pro"/'
+    'usr/share/plasma/look-and-feel/pearOS-dark/metadata.json|s/"pearOS Splash Theme for Plasma"/"SlozOS Pro Dark"/'
+    'usr/share/sddm/themes/pearOS/metadata.desktop|s/^Name=pearOS SDDM$/Name=SlozOS Pro/'
+    'usr/share/sddm/themes/pearOS-dark/metadata.desktop|s/^Name=pearOS SDDM Dark$/Name=SlozOS Pro (dark)/'
+    'etc/default/grub|s/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="SlozOS Pro"/'
+)
+
+CHANGED_BOOT_SPLASH=false CHANGED_BOOT_MENU=false
+note_change() {
+    case $1 in
+        usr/share/plymouth/*) CHANGED_BOOT_SPLASH=true ;;
+        etc/default/grub)     CHANGED_BOOT_MENU=true ;;
+    esac
+}
+sum() { sha256sum "$1" | cut -d' ' -f1; }
+
+# keep pearOS's version of <rel> unless the file there now is one we wrote
+keep_original() {
+    local rel=$1 file=$ROOT/$1
+    if [[ -f $WRITTEN/$rel.sha256 && $(cat "$WRITTEN/$rel.sha256") == "$(sum "$file")" ]]; then
+        return 0
+    fi
+    install -Dm644 "$file" "$ORIGINALS/$rel"
+    chmod --reference="$file" "$ORIGINALS/$rel" 2>/dev/null || true
+}
+remember() { mkdir -p "$(dirname "$WRITTEN/$1")"; sum "$ROOT/$1" > "$WRITTEN/$1.sha256"; }
+
+apply() {
+    local entry rel src file new
+    for entry in "${LOGOS[@]}"; do
+        rel=${entry%%|*} src=$ART/${entry#*|} file=$ROOT/${entry%%|*}
+        [[ -f $file && -f $src ]] || continue
+        cmp -s "$file" "$src" && continue
+        keep_original "$rel"
+        cat "$src" > "$file"
+        remember "$rel"; note_change "$rel"
+    done
+    new=$(mktemp)
+    for entry in "${NAMES[@]}"; do
+        rel=${entry%%|*} file=$ROOT/${entry%%|*}
+        [[ -f $file ]] || continue
+        sed "${entry#*|}" "$file" > "$new"
+        cmp -s "$new" "$file" && continue
+        keep_original "$rel"
+        cat "$new" > "$file"
+        remember "$rel"; note_change "$rel"
+    done
+    rm -f "$new"
+    refresh_boot
+}
+
+restore() {
+    local orig rel
+    [[ -d $ORIGINALS ]] || return 0
+    while IFS= read -r -d '' orig; do
+        rel=${orig#"$ORIGINALS"/}
+        [[ -e $ROOT/$rel ]] || continue           # its package is gone; nothing to restore
+        cat "$orig" > "$ROOT/$rel"
+        note_change "$rel"
+    done < <(find "$ORIGINALS" -type f -print0)
+    rm -rf "$STATE"
+    refresh_boot
+}
+
+# The boot splash lives in the initramfs and the boot menu in grub.cfg, so
+# rebuild those when they changed (not in test trees)
+refresh_boot() {
+    [[ -z $ROOT ]] || return 0
+    if $CHANGED_BOOT_MENU && [[ -f /boot/grub/grub.cfg ]] && command -v grub-mkconfig >/dev/null; then
+        grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1 && echo "SlozOS Pro: boot menu updated"
+    fi
+    if $CHANGED_BOOT_SPLASH && command -v mkinitcpio >/dev/null; then
+        mkinitcpio -P >/dev/null 2>&1 && echo "SlozOS Pro: boot splash updated"
+    fi
+}
+
+case "${1:-}" in
+    apply)   apply ;;
+    restore) restore ;;
+    *)       echo "usage: slozos-pro-theme apply|restore" >&2; exit 2 ;;
+esac

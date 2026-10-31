@@ -1,8 +1,0 @@
-[Plymouth Theme]
-Name=SlozOS
-Description=SlozOS boot splash — dark glass minimal
-ModuleName=script
-
-[script]
-ImageDir=/usr/share/plymouth/themes/slozos
-ScriptFile=/usr/share/plymouth/themes/slozos/slozos.script

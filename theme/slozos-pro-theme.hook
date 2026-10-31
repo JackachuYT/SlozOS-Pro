@@ -1,0 +1,21 @@
+# A pearOS or Arch update put back a pearOS name or logo: make it SlozOS Pro again
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/lib/os-release
+Target = etc/lsb-release
+Target = etc/issue
+Target = etc/default/grub
+Target = usr/share/pixmaps/nicec0re-logo.png
+Target = usr/share/icons/piri-logo.png
+Target = usr/share/extras/*
+Target = usr/share/plasma/look-and-feel/pearOS*
+Target = usr/share/plasma/plasmoids/xyz.pearos.pearmenu/*
+Target = usr/share/sddm/themes/pearOS*
+Target = usr/share/plymouth/themes/pear-plymouth/*
+
+[Action]
+Description = Applying the SlozOS Pro theme...
+When = PostTransaction
+Exec = /usr/lib/slozos-pro-theme/slozos-pro-theme apply

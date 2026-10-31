@@ -1,0 +1,29 @@
+# SlozOS Pro theme for pearOS: says SlozOS Pro (name and logo) — nothing else
+# changes. Install on pearOS NiceC0re with: sudo pacman -U slozos-pro-theme-*.pkg.tar.zst
+pkgname=slozos-pro-theme
+pkgver=1.0
+pkgrel=1
+pkgdesc="SlozOS Pro name and logo for pearOS (nothing else changes)"
+arch=('any')
+url="https://github.com/JackachuYT/SlozOS-Pro"
+license=('GPL-3.0-or-later')
+depends=('bash' 'coreutils' 'sed' 'findutils' 'diffutils')
+install=slozos-pro-theme.install
+source=('slozos-pro-theme' 'slozos-pro-theme.hook'
+        'art/boot.png' 'art/logo-black.svg' 'art/logo-fullscreen.png' 'art/logo-tile-1024.png'
+        'art/logo-tile-512.png' 'art/logo-white-512.png' 'art/logo-white.svg')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    cd "$srcdir"
+    install -Dm755 slozos-pro-theme      "$pkgdir/usr/lib/slozos-pro-theme/slozos-pro-theme"
+    install -Dm644 slozos-pro-theme.hook "$pkgdir/usr/share/libalpm/hooks/zz-slozos-pro-theme.hook"
+    local f
+    for f in boot.png logo-black.svg logo-fullscreen.png logo-tile-1024.png logo-tile-512.png logo-white-512.png logo-white.svg; do
+        install -Dm644 "$f" "$pkgdir/usr/share/slozos-pro-theme/$f"
+    done
+    # LOGO=slozos-pro-logo in os-release (About windows look it up as an icon)
+    for f in "$startdir"/icons/*/slozos-pro-logo.png; do
+        install -Dm644 "$f" "$pkgdir/usr/share/icons/hicolor/$(basename "$(dirname "$f")")/apps/slozos-pro-logo.png"
+    done
+}

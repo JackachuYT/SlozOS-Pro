@@ -1,0 +1,3 @@
+post_install() { /usr/lib/slozos-pro-theme/slozos-pro-theme apply; }
+post_upgrade() { /usr/lib/slozos-pro-theme/slozos-pro-theme apply; }
+pre_remove()   { /usr/lib/slozos-pro-theme/slozos-pro-theme restore; }
