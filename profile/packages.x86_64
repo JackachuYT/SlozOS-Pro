@@ -21,6 +21,7 @@ less
 man-db
 efibootmgr
 grub
+syslinux
 os-prober
 dosfstools
 e2fsprogs
