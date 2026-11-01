@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SlozOS Pro wallpaper: soft translucent petals blooming from the centre.
 Original artwork (procedural), CC-BY-SA-4.0. Renders light and dark variants.
-    python3 make-wallpaper.py   ->  slozos-pro-light.jpg, slozos-pro-dark.jpg
+    python3 make-wallpaper.py   ->  bloom-light.jpg, bloom-dark.jpg
 """
 import math
 import numpy as np
@@ -60,7 +60,7 @@ def render(dark):
     out = Image.fromarray(np.clip(img, 0, 255).astype(np.uint8))
     return out.filter(ImageFilter.GaussianBlur(0.6))
 
-for name, dark in (("slozos-pro-light", False), ("slozos-pro-dark", True)):
+for name, dark in (("bloom-light", False), ("bloom-dark", True)):
     im = render(dark)
     im.save(f"{name}.jpg", quality=90, optimize=True, progressive=True)
     im.resize((960, 540), Image.LANCZOS).save(f"{name}-preview.png")

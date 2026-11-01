@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────────────────────
+# SlozOS Pro hardware setup — runs early on every boot (slozos-pro-hardware
+# .service). Device fixes apply only on the hardware that needs them.
+#
+#   Surface Pro 1/2  bogus "lid closed" after waking (ignored, so it doesn't
+#                    sleep again forever), deep sleep, Marvell Wi-Fi kept awake
+#   any Marvell Wi-Fi  power saving off (it drops the connection otherwise)
+#   profile          light (<7 GB RAM) / full   → /run/slozos-pro/profile
+#   graphics         light (Intel HD 4000-class and older, or no 3D) / full
+#                                                → /run/slozos-pro/graphics
+# slozos-pro-session reads the last two at login. Writes only to /run and to
+# /etc/xdg/powerdevilrc (system default; people's own settings win).
+# ──────────────────────────────────────────────────────────────────────────────
+set -uo pipefail
+dmi() { cat "/sys/class/dmi/id/$1" 2>/dev/null; }
+VENDOR=$(dmi sys_vendor); PRODUCT=$(dmi product_name)
+echo "Hardware: ${VENDOR:-?} ${PRODUCT:-?}"
+mkdir -p /run/slozos-pro
+
+LID_FIX=false MARVELL=false
+deep_sleep() { grep -qw deep /sys/power/mem_sleep 2>/dev/null && echo deep > /sys/power/mem_sleep && echo "Sleep: deep"; }
+
+if [[ $VENDOR == Microsoft* ]]; then
+    case "$PRODUCT" in
+        "Surface with Windows 8 Pro"|"Surface Pro"|"Surface Pro 2")
+            mkdir -p /run/systemd/logind.conf.d
+            printf '[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore\nHandleLidSwitchDocked=ignore\n' \
+                > /run/systemd/logind.conf.d/10-slozos-pro-surface-lid.conf
+            echo "Surface Pro 1/2: lid-switch fix on"
+            LID_FIX=true MARVELL=true; deep_sleep ;;
+        "Surface Book")
+            MARVELL=true; deep_sleep ;;
+    esac
+fi
+
+# Plasma's power manager handles the lid itself inside a session, so the
+# logind setting above alone isn't enough (SlozOS 1.4.5 found this the hard way)
+for profile in AC Battery LowBattery; do
+    if $LID_FIX; then
+        kwriteconfig6 --file /etc/xdg/powerdevilrc --group "$profile" --group SuspendAndShutdown --key LidAction 0
+    else
+        kwriteconfig6 --file /etc/xdg/powerdevilrc --group "$profile" --group SuspendAndShutdown --key LidAction --delete
+    fi
+done 2>/dev/null
+
+grep -qsx '1286' /sys/bus/usb/devices/*/idVendor && MARVELL=true
+for d in /sys/bus/pci/devices/*; do
+    [[ $(cat "$d/vendor" 2>/dev/null) == 0x11ab && $(cat "$d/class" 2>/dev/null) == 0x0280* ]] && MARVELL=true
+done
+if $MARVELL; then
+    mkdir -p /run/NetworkManager/conf.d
+    printf '[connection]\nwifi.powersave = 2\n' > /run/NetworkManager/conf.d/10-slozos-pro-marvell.conf
+    echo "Marvell Wi-Fi: power saving off"
+fi
+
+# ── Profile and graphics ─────────────────────────────────────────────────────
+MEM_KB=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+PROFILE=full; (( MEM_KB < 7 * 1024 * 1024 )) && PROFILE=light
+GRAPHICS=light
+for d in /sys/bus/pci/devices/*; do
+    [[ $(cat "$d/class" 2>/dev/null) == 0x03* ]] || continue
+    case "$(cat "$d/vendor" 2>/dev/null)" in
+        0x8086) case "$(cat "$d/device" 2>/dev/null)" in
+                    0x01*|0x04*|0x0a*|0x0d*|0x16*) ;;             # Sandy Bridge → Broadwell: keep light
+                    *) GRAPHICS=full ;;
+                esac ;;
+        0x10de|0x1002) GRAPHICS=full ;;
+    esac
+done
+echo "$PROFILE" > /run/slozos-pro/profile
+echo "$GRAPHICS" > /run/slozos-pro/graphics
+echo "Profile: $PROFILE ($(( MEM_KB / 1024 )) MB RAM), graphics: $GRAPHICS"

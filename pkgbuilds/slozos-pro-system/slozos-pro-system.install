@@ -1,0 +1,10 @@
+_apply() {
+    /usr/lib/slozos-pro/brand
+    # SlozOS Pro boot splash (the kernel's initramfs is rebuilt by mkinitcpio's
+    # own hook at the end of this transaction when the kernel is installed;
+    # otherwise run `sudo mkinitcpio -P` to apply a changed splash)
+    mkdir -p /etc/plymouth
+    printf '[Daemon]\nTheme=slozos-pro\nShowDelay=0\n' > /etc/plymouth/plymouthd.conf
+}
+post_install() { _apply; }
+post_upgrade() { _apply; }

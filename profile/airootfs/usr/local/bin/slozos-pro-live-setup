@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Live session only (booted from the USB stick): a passwordless "live" user
+# that logs straight into the desktop, with an Install SlozOS Pro icon.
+set -u
+# only groups this system actually has (useradd refuses unknown ones)
+GROUPS_=$(for g in wheel audio video input network storage optical; do getent group "$g" >/dev/null && printf '%s,' "$g"; done)
+id live >/dev/null 2>&1 || useradd -m -G "${GROUPS_%,}" -c "SlozOS Pro Live" -s /usr/bin/zsh live
+passwd -d live >/dev/null
+DESK=/home/live/Desktop
+mkdir -p "$DESK"
+if [[ -f /usr/share/applications/calamares.desktop ]]; then
+    sed -e 's/^Name=.*/Name=Install SlozOS Pro/' -e '/^Name\[/d' /usr/share/applications/calamares.desktop > "$DESK/install-slozos-pro.desktop"
+    chmod +x "$DESK/install-slozos-pro.desktop"
+fi
+chown -R live:live /home/live

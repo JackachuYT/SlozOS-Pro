@@ -1,0 +1,87 @@
+# SlozOS Pro desktop look. Built by CI from pearOS NiceC0re's pearos-settings
+# (GPL-3.0, pinned below) with every wallpaper and logo replaced by SlozOS
+# Pro artwork, and the custom-licensed pearOS apps (calculator, notch) left
+# out. build/build-packages.sh copies the artwork into ./artwork first.
+pkgname=slozos-pro-settings
+pkgver=1.0
+pkgrel=1
+_pearos_settings=bd65b6bb2bd0246d4603bf638b700e8b0ab6e67a   # 2026-08-07
+pkgdesc="SlozOS Pro desktop look: pearOS NiceC0re's KDE design with SlozOS Pro wallpapers and logos"
+arch=('any')
+url="https://github.com/JackachuYT/SlozOS-Pro"
+license=('GPL-3.0-or-later')
+depends=('konsole' 'kcalc' 'kmail' 'system-overview'
+         'pearos-notes' 'pearos-appstore' 'pearos-calendar' 'pearos-contacts' 'pearos-todo'
+         'pearos-liquidgel' 'pearos-window-borders' 'pearos-icons' 'pearos-keyring' 'pearos-zshconfig')
+makedepends=('git' 'python')
+provides=('pearos-settings')
+conflicts=('pearos-settings')
+replaces=('pearos-settings')
+options=('!strip' '!emptydirs')
+source=("pearos-settings::git+https://github.com/pearOS-archlinux/pearos-settings#commit=${_pearos_settings}"
+        'touch-defaults.py')
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+    local src="$srcdir/pearos-settings" art="$startdir/artwork"
+    install -dm755 "$pkgdir/etc" "$pkgdir/usr"
+    cp -r "$src/etc/." "$pkgdir/etc/"
+    cp -r "$src/usr/." "$pkgdir/usr/"
+    find "$pkgdir" -type f -name '*.bak' -delete
+
+    # ── Wallpapers: SlozOS Pro's own (pearOS's set includes Apple's macOS
+    # wallpapers, which can't be redistributed). Ours go in at the paths
+    # pearOS's panel/lock/login configs already point to.
+    local W="$pkgdir/usr/share/extras/wallpapers"
+    rm -rf "$W" "$pkgdir/usr/share/wallpapers/pearOS" "$pkgdir/usr/share/wallpapers/pearOS-dark"
+    install -Dm644 "$art/byteyum-dark.jpg"  "$W/Default/dark-mode.jpg"
+    install -Dm644 "$art/byteyum-light.jpg" "$W/Default/light-mode.jpg"
+    install -Dm644 "$art/byteyum-dark.jpg"  "$pkgdir/usr/share/wallpapers/pearOS-dark/default.jpg"
+    install -Dm644 "$art/byteyum-light.jpg" "$pkgdir/usr/share/wallpapers/pearOS/default.jpg"
+    install -Dm644 "$art/byteyum-dark.jpg"  "$pkgdir/usr/share/extras/background.jpg"
+    # …and as proper wallpaper packages for the wallpaper picker
+    local name file
+    for name in ByteYum Bloom; do
+        case $name in ByteYum) file=byteyum ;; Bloom) file=bloom ;; esac
+        install -Dm644 "$art/$file-light.jpg" "$pkgdir/usr/share/wallpapers/SlozOS-Pro-$name/contents/images/3840x2160.jpg"
+        install -Dm644 "$art/$file-dark.jpg"  "$pkgdir/usr/share/wallpapers/SlozOS-Pro-$name/contents/images_dark/3840x2160.jpg"
+        cat > "$pkgdir/usr/share/wallpapers/SlozOS-Pro-$name/metadata.json" <<JSON
+{
+    "KPlugin": {
+        "Authors": [ { "Name": "SlozOS" } ],
+        "Id": "SlozOS-Pro-$name",
+        "License": "CC-BY-SA-4.0",
+        "Name": "SlozOS Pro $name"
+    }
+}
+JSON
+    done
+
+    # ── Logos: the SloZ sloth instead of pearOS's pear ───────────────────────
+    install -Dm644 "$art/logo-tile-512.png"  "$pkgdir/usr/share/icons/piri-logo.png"
+    install -Dm644 "$art/logo-tile-512.png"  "$pkgdir/usr/share/extras/release_logo.png"
+    install -Dm644 "$art/logo-white.png"     "$pkgdir/usr/share/extras/pearos_cropped_transparent.png"
+    install -Dm644 "$art/logo-white.png"     "$pkgdir/usr/share/extras/Pearos_fullscreen_non-transparent.png.png.png"
+    install -Dm644 "$art/logo-white.svg"     "$pkgdir/usr/share/extras/pearlogo.svg"
+    install -Dm644 "$art/logo-white.svg"     "$pkgdir/usr/share/extras/drawing.svg"
+    install -Dm644 "$art/logo-black.svg"     "$pkgdir/usr/share/extras/drawing-black.svg"
+    local splash
+    for splash in "$pkgdir"/usr/share/plasma/look-and-feel/*/contents/splash/images/drawing.svg; do
+        install -m644 "$art/logo-white.svg" "$splash"
+    done
+
+    # ── Names people see ─────────────────────────────────────────────────────
+    sed -i 's/"pearOS Splash Theme for Plasma"/"SlozOS Pro"/' "$pkgdir/usr/share/plasma/look-and-feel/pearOS/metadata.json"
+    sed -i 's/"pearOS Splash Theme for Plasma"/"SlozOS Pro Dark"/' "$pkgdir/usr/share/plasma/look-and-feel/pearOS-dark/metadata.json"
+    sed -i 's/^Name=pearOS SDDM Dark$/Name=SlozOS Pro (dark)/; s/^Name=pearOS SDDM$/Name=SlozOS Pro/' "$pkgdir"/usr/share/sddm/themes/*/metadata.desktop
+
+    # ── Touch first ──────────────────────────────────────────────────────────
+    python "$srcdir/touch-defaults.py" "$pkgdir/etc/skel/.config"
+
+    # ── Left out ─────────────────────────────────────────────────────────────
+    # pearOS's boot splash (SlozOS Pro's own comes with slozos-pro-system),
+    # the notch (custom licence, not shipped) and pearOS's welcome app
+    rm -rf "$pkgdir/usr/share/plymouth/themes/pear-plymouth" "$pkgdir/usr/share/extras/pear-plymouth"
+    rm -f "$pkgdir/etc/skel/.config/autostart/pearos-notch.desktop" "$pkgdir/etc/skel/.config/autostart/welcome.desktop"
+    chmod -R a+rX,go-w "$pkgdir"
+}

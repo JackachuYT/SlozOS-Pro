@@ -1,0 +1,13 @@
+# Updates to Arch's base files bring "Arch Linux" back; put SlozOS Pro back.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/lib/os-release
+Target = etc/lsb-release
+Target = etc/issue
+
+[Action]
+Description = Applying SlozOS Pro branding...
+When = PostTransaction
+Exec = /usr/lib/slozos-pro/brand
