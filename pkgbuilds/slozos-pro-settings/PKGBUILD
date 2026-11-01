@@ -27,7 +27,7 @@ package() {
     install -dm755 "$pkgdir/etc" "$pkgdir/usr"
     cp -r "$src/etc/." "$pkgdir/etc/"
     cp -r "$src/usr/." "$pkgdir/usr/"
-    find "$pkgdir" -name '*.bak' -delete
+    find "$pkgdir" -type f -name '*.bak' -delete
 
     # ── Wallpapers: SlozOS Pro's own (pearOS's set includes Apple's macOS
     # wallpapers, which can't be redistributed). Ours go in at the paths
