@@ -14,8 +14,9 @@
 set -euo pipefail
 VERSION=${1:?version}; REPO=${2:?repo dir}; NAME=${3:?repo name}; PKGREL=${4:-1}
 CTX=$(cd "$(dirname "$0")/.." && pwd)
-WORK=$(mktemp -d)
 id builder >/dev/null 2>&1 || useradd -m builder
+# in builder's home: makepkg runs as builder and can't enter root's mktemp dirs
+WORK=$(sudo -u builder mktemp -d /home/builder/build.XXXXXX)
 
 # Artwork every package can pick from (./artwork next to each PKGBUILD)
 ART="$WORK/artwork"

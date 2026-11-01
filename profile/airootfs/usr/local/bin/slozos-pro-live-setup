@@ -2,7 +2,9 @@
 # Live session only (booted from the USB stick): a passwordless "live" user
 # that logs straight into the desktop, with an Install SlozOS Pro icon.
 set -u
-id live >/dev/null 2>&1 || useradd -m -G wheel,audio,video,input,network,storage,optical -c "SlozOS Pro Live" -s /usr/bin/zsh live
+# only groups this system actually has (useradd refuses unknown ones)
+GROUPS_=$(for g in wheel audio video input network storage optical; do getent group "$g" >/dev/null && printf '%s,' "$g"; done)
+id live >/dev/null 2>&1 || useradd -m -G "${GROUPS_%,}" -c "SlozOS Pro Live" -s /usr/bin/zsh live
 passwd -d live >/dev/null
 DESK=/home/live/Desktop
 mkdir -p "$DESK"
